@@ -3,9 +3,11 @@ package com.study.vhra.cardview.model
 import android.opengl.GLES20.*
 import android.opengl.Matrix
 import android.os.SystemClock
+import android.util.Log
 import com.study.vhra.cardview.R
 import com.study.vhra.cardview.utils.BufferLoader
 import com.study.vhra.cardview.utils.TextureLoader
+import com.study.vhra.cardview.utils.TimeCounter
 
 class CardModel : GraphicModel {
     companion object {
@@ -59,6 +61,8 @@ class CardModel : GraphicModel {
     private var indexBuffer: Int = 0
 
     private var angle: Float = 0.0f
+    private val rotateSpeed = 45f/1000f
+    private val timeCounter: TimeCounter by lazy { TimeCounter().also { it.start() } }
 
     private val mProjectionMatrix: FloatArray by lazy {
         FloatArray(16).also { Matrix.setIdentityM(it, 0) }
@@ -117,12 +121,13 @@ class CardModel : GraphicModel {
     }
 
     override fun onUpdate() {
+        angle += (rotateSpeed * timeCounter.getTime())
+
         Matrix.setIdentityM(mMatrix, 0)
         Matrix.translateM(mMatrix, 0, 0f, 0f, -2f)
-        Matrix.rotateM(mMatrix, 0, toRad(angle), 0f, 1f, 0f)
+        Matrix.rotateM(mMatrix, 0, angle, 0f, 1f, 0f)
 
         Matrix.multiplyMM(mMatrix,0, mProjectionMatrix, 0, mMatrix, 0)
-        angle+=0.01f
     }
 
     override fun onDraw() {
@@ -135,6 +140,4 @@ class CardModel : GraphicModel {
         val ratio: Float = width.toFloat() / height.toFloat()
         Matrix.perspectiveM(mProjectionMatrix, 0, 45.0f, ratio, 0.1f, 1000.0f)
     }
-
-    private fun toRad(angle: Float): Float = angle * 180.0f / Math.PI.toFloat()
 }
