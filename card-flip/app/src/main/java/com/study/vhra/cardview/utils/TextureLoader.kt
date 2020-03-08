@@ -2,16 +2,34 @@ package com.study.vhra.cardview.utils
 
 import android.content.Context
 import android.graphics.BitmapFactory
-import android.opengl.GLES20
+import android.opengl.GLES20.*
 import android.opengl.GLUtils
 
 class TextureLoader(
     private val context: Context
 ) {
-    fun loadTexture(resourceId: Int): Int {
+    private val textureMap: MutableMap<Int, String> = HashMap()
+
+    fun loadTexture(texture: String, textureUnit: Int) {
+        if (texture.contains("drawable://")
+            && (!textureMap.containsKey(textureUnit)
+                    || !textureMap[textureUnit].equals(texture))) {
+            val id = context.resources.getIdentifier(
+                texture.replace("drawable://", ""),
+                "drawable",
+                context.packageName)
+
+            glActiveTexture(textureUnit)
+            glBindTexture(GL_TEXTURE_2D, loadTexture(id))
+
+            textureMap[textureUnit] = texture
+        }
+    }
+
+    private fun loadTexture(resourceId: Int): Int {
         val textureHandle = IntArray(1)
 
-        GLES20.glGenTextures(1, textureHandle, 0)
+        glGenTextures(1, textureHandle, 0)
 
         if (textureHandle[0] != 0) {
             val options = BitmapFactory.Options()
@@ -21,22 +39,22 @@ class TextureLoader(
             val bitmap = BitmapFactory.decodeResource(context.resources, resourceId, options)
 
             // Bind to the texture in OpenGL
-            GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textureHandle[0])
+            glBindTexture(GL_TEXTURE_2D, textureHandle[0])
 
             // Set filtering
-            GLES20.glTexParameteri(
-                GLES20.GL_TEXTURE_2D,
-                GLES20.GL_TEXTURE_MIN_FILTER,
-                GLES20.GL_NEAREST
+            glTexParameteri(
+                GL_TEXTURE_2D,
+                GL_TEXTURE_MIN_FILTER,
+                GL_NEAREST
             )
-            GLES20.glTexParameteri(
-                GLES20.GL_TEXTURE_2D,
-                GLES20.GL_TEXTURE_MAG_FILTER,
-                GLES20.GL_NEAREST
+            glTexParameteri(
+                GL_TEXTURE_2D,
+                GL_TEXTURE_MAG_FILTER,
+                GL_NEAREST
             )
 
             // Load the bitmap into the bound texture.
-            GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, bitmap, 0)
+            GLUtils.texImage2D(GL_TEXTURE_2D, 0, bitmap, 0)
 
             // Recycle the bitmap, since its data has been loaded into OpenGL.
             bitmap.recycle()

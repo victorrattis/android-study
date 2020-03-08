@@ -6,6 +6,7 @@ import android.os.SystemClock
 import android.util.Log
 import com.study.vhra.cardview.R
 import com.study.vhra.cardview.utils.BufferLoader
+import com.study.vhra.cardview.utils.FPSCounter
 import com.study.vhra.cardview.utils.TextureLoader
 import com.study.vhra.cardview.utils.TimeCounter
 
@@ -63,6 +64,7 @@ class CardModel : GraphicModel {
     private var angle: Float = 0.0f
     private val rotateSpeed = 45f/1000f
     private val timeCounter: TimeCounter by lazy { TimeCounter().also { it.start() } }
+    private val fPSCounter = FPSCounter()
 
     private val mProjectionMatrix: FloatArray by lazy {
         FloatArray(16).also { Matrix.setIdentityM(it, 0) }
@@ -75,16 +77,11 @@ class CardModel : GraphicModel {
     override fun loadModel(bufferLoader: BufferLoader, textureLoader: TextureLoader) {
         vertexBuffer = bufferLoader.createArrayBuffer(vertices, BYTES_PER_FLOAT)
         coordTextureBuffer = bufferLoader.createArrayBuffer(textureCoods, BYTES_PER_FLOAT)
-        indexBuffer = bufferLoader.createElementArrayBuffer(indices, BYTES_PER_INT)
         textureIndicesBuffer = bufferLoader.createArrayBuffer(textureIndices, BYTES_PER_FLOAT)
+        indexBuffer = bufferLoader.createElementArrayBuffer(indices, BYTES_PER_INT)
 
-        // Set the active texture unit to texture unit 0.
-        glActiveTexture(GL_TEXTURE0)
-        glBindTexture(GL_TEXTURE_2D, textureLoader.loadTexture(R.drawable.image))
-
-        // Set the active texture unit to texture unit 1.
-        glActiveTexture(GL_TEXTURE1)
-        glBindTexture(GL_TEXTURE_2D, textureLoader.loadTexture(R.drawable.card))
+        textureLoader.loadTexture("drawable://image", GL_TEXTURE0)
+        textureLoader.loadTexture("drawable://card", GL_TEXTURE1)
     }
 
     override fun onAttach(shader: ShaderProgram) {
@@ -133,6 +130,8 @@ class CardModel : GraphicModel {
     override fun onDraw() {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer)
         glDrawElements(GL_TRIANGLES, indices.size, GL_UNSIGNED_SHORT, 0)
+
+        fPSCounter.logFrame()
     }
 
     override fun onSurfaceChanged(width: Int, height: Int) {
